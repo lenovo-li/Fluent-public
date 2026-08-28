@@ -1,0 +1,195 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>18.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{b1e7d4a3-6c92-4f18-8a5d-3f7e2c9b0d61}</ProjectGuid>
+    <RootNamespace>FluentUITests</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Release'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+      <PreprocessorDefinitions Condition="'$(Configuration)'=='Debug'">_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(Configuration)'=='Release'">NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary Condition="'$(Configuration)'=='Debug'">MultiThreadedDebug</RuntimeLibrary>
+      <RuntimeLibrary Condition="'$(Configuration)'=='Release'">MultiThreaded</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="framework\Test.h" />
+    <ClInclude Include="framework\PixelSurface.h" />
+    <ClInclude Include="framework\FakeCompositionBackend.h" />
+    <ClInclude Include="unit\LayoutTestHelpers.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="framework\TestMain.cpp" />
+    <ClCompile Include="unit\GeometryTests.cpp" />
+    <ClCompile Include="unit\StackPanelTests.cpp" />
+    <ClCompile Include="unit\WrapPanelTests.cpp" />
+    <ClCompile Include="unit\GridTests.cpp" />
+    <ClCompile Include="unit\CanvasTests.cpp" />
+    <ClCompile Include="unit\CanvasRightBottomTests.cpp" />
+    <ClCompile Include="unit\CanvasZIndexTests.cpp" />
+    <ClCompile Include="unit\DockPanelTests.cpp" />
+    <ClCompile Include="unit\InvalidationTests.cpp" />
+    <ClCompile Include="unit\DirtyFlagsTests.cpp" />
+    <ClCompile Include="unit\SubtreeDirtyTests.cpp" />
+    <ClCompile Include="unit\PopupStateTests.cpp" />
+    <ClCompile Include="unit\SubscriptionTests.cpp" />
+    <ClCompile Include="unit\EventTests.cpp" />
+    <ClCompile Include="unit\RoutedEventTests.cpp" />
+    <ClCompile Include="unit\FocusManagerTests.cpp" />
+    <ClCompile Include="unit\InputManagerCaptureTests.cpp" />
+    <ClCompile Include="unit\ContextMenuTests.cpp" />
+    <ClCompile Include="unit\WindowServicesSubscriptionTests.cpp" />
+    <ClCompile Include="unit\FrameSchedulerTests.cpp" />
+    <ClCompile Include="unit\AnimationRegistryTests.cpp" />
+    <ClCompile Include="unit\MeasureCacheTests.cpp" />
+    <ClCompile Include="unit\SetPropertyTests.cpp" />
+    <ClCompile Include="unit\UIContextTests.cpp" />
+    <ClCompile Include="unit\ThemeTokenTests.cpp" />
+    <ClCompile Include="unit\FocusVisualTests.cpp" />
+    <ClCompile Include="unit\WindowAppearanceTests.cpp" />
+    <ClCompile Include="unit\ThemeChangeInvalidationTests.cpp" />
+    <ClCompile Include="unit\ThemeOverrideTests.cpp" />
+    <ClCompile Include="unit\BorderTests.cpp" />
+    <ClCompile Include="unit\ButtonTests.cpp" />
+    <ClCompile Include="unit\ApplicationTests.cpp" />
+    <ClCompile Include="unit\FrameWaiterTests.cpp" />
+    <ClCompile Include="unit\AnimatedValueTests.cpp" />
+    <ClCompile Include="unit\ButtonBaseTests.cpp" />
+    <ClCompile Include="unit\RepeatButtonTests.cpp" />
+    <ClCompile Include="unit\RangeBaseTests.cpp" />
+    <ClCompile Include="unit\CompositionBackendTests.cpp" />
+    <ClCompile Include="unit\ProgressBarCompositionTests.cpp" />
+    <ClCompile Include="unit\ScrollContentHostTests.cpp" />
+    <ClCompile Include="unit\TreeViewCompositionTests.cpp" />
+    <ClCompile Include="unit\TextAreaCompositionTests.cpp" />
+    <ClCompile Include="unit\LineIndexTests.cpp" />
+    <ClCompile Include="unit\LineLayoutCacheTests.cpp" />
+    <ClCompile Include="unit\LogSinkTests.cpp" />
+    <ClCompile Include="unit\WrapExtentMapTests.cpp" />
+    <ClCompile Include="unit\TextAreaLogAppendTests.cpp" />
+    <ClCompile Include="unit\TextAreaNoWrapTests.cpp" />
+    <ClCompile Include="unit\TextAreaWrapVirtualTests.cpp" />
+    <ClCompile Include="unit\TabControlTests.cpp" />
+    <ClCompile Include="unit\DataGridTests.cpp" />
+    <ClCompile Include="unit\ChartTests.cpp" />
+    <ClCompile Include="unit\InfoBarMetricTests.cpp" />
+    <ClCompile Include="unit\ExpanderTests.cpp" />
+    <ClCompile Include="unit\ExpanderTransitionTests.cpp" />
+    <ClCompile Include="unit\GroupBoxTests.cpp" />
+    <ClCompile Include="unit\HyperlinkTests.cpp" />
+    <ClCompile Include="unit\CalendarConstraintsTests.cpp" />
+    <ClCompile Include="unit\CalendarTests.cpp" />
+    <ClCompile Include="unit\DatePickerTests.cpp" />
+    <ClCompile Include="unit\ScrollPanelTests.cpp" />
+    <ClCompile Include="unit\SeparatorTests.cpp" />
+    <ClCompile Include="unit\ToolBarTests.cpp" />
+    <ClCompile Include="unit\StatusBarTests.cpp" />
+    <ClCompile Include="unit\UniformGridTests.cpp" />
+    <ClCompile Include="unit\VisibleLinesTests.cpp" />
+    <ClCompile Include="unit\WordBoundaryTests.cpp" />
+    <ClCompile Include="unit\ClickCounterTests.cpp" />
+    <ClCompile Include="unit\TextEditInteractionTests.cpp" />
+    <ClCompile Include="unit\TextEditMaxLengthTests.cpp" />
+    <ClCompile Include="unit\TextEditSelectionTests.cpp" />
+    <ClCompile Include="unit\TextEditInputPolicyTests.cpp" />
+    <ClCompile Include="unit\FramePacingTests.cpp" />
+    <ClCompile Include="unit\SelectorTests.cpp" />
+    <ClCompile Include="unit\ListBoxTests.cpp" />
+    <ClCompile Include="unit\ListBoxMultiSelectTests.cpp" />
+    <ClCompile Include="unit\ImageTests.cpp" />
+    <ClCompile Include="unit\PopupGeometryTests.cpp" />
+    <ClCompile Include="unit\FrameRingTests.cpp" />
+    <ClCompile Include="unit\DebugHudTests.cpp" />
+    <ClCompile Include="unit\SessionLogTests.cpp" />
+    <ClCompile Include="unit\DirtyRegionTests.cpp" />
+    <ClCompile Include="unit\DirtyBoundsOverflowTests.cpp" />
+    <ClCompile Include="unit\ElementOpacityTests.cpp" />
+    <ClCompile Include="unit\OpacityTests.cpp" />
+    <ClCompile Include="unit\MenuBarLayoutTests.cpp" />
+    <ClCompile Include="unit\ResizeGripOuterTests.cpp" />
+    <ClCompile Include="unit\MinTrackSizeTests.cpp" />
+    <ClCompile Include="unit\ControlPropertyTests.cpp" />
+    <ClCompile Include="unit\ToggleVisualsTests.cpp" />
+    <ClCompile Include="unit\PanelViewportCullingTests.cpp" />
+    <ClCompile Include="unit\DrawingContextCounterTests.cpp" />
+    <ClCompile Include="unit\PerformanceCountersTests.cpp" />
+    <ClCompile Include="unit\ResourceCacheTests.cpp" />
+    <ClCompile Include="unit\DeviceLostControllerTests.cpp" />
+    <ClCompile Include="unit\DeviceLostStatePreservationTests.cpp" />
+    <ClCompile Include="unit\TreeViewTypeAheadTests.cpp" />
+    <ClCompile Include="unit\TreeViewMultiSelectTests.cpp" />
+    <ClCompile Include="unit\DialogApiTests.cpp" />
+    <ClCompile Include="unit\WindowLifecycleTests.cpp" />
+    <ClCompile Include="unit\SetVisibleLayoutTests.cpp" />
+    <ClCompile Include="unit\MessageDialogTests.cpp" />
+    <ClCompile Include="unit\UndoStackTests.cpp" />
+    <ClCompile Include="unit\FrameworkElementMinMaxTests.cpp" />
+    <ClCompile Include="unit\TextEditUndoTests.cpp" />
+    <ClCompile Include="unit\DragDropTests.cpp" />
+    <ClCompile Include="unit\ComboBoxTests.cpp" />
+    <ClCompile Include="unit\ViewboxTests.cpp" />
+    <ClCompile Include="component\DWriteFormatTests.cpp" />
+    <ClCompile Include="component\TextBlockLayoutCacheTests.cpp" />
+    <ClCompile Include="component\LabelMeasureCacheTests.cpp" />
+    <ClCompile Include="component\FocusRingPixelTests.cpp" />
+    <ClCompile Include="component\ClippedFocusRingTests.cpp" />
+    <ClCompile Include="component\TextDescenderClipTests.cpp" />
+    <ClCompile Include="component\FocusRingClipMatrixTests.cpp" />
+    <ClCompile Include="component\LabelWeightMeasureTests.cpp" />
+    <ClCompile Include="unit\PanelChildManagementTests.cpp" />
+    <ClCompile Include="component\StockAnalyzerShapeTests.cpp" />
+    <ClCompile Include="component\InitialStateNoAnimationTests.cpp" />
+    <ClCompile Include="component\SelfInspectionTests.cpp" />
+    <ClCompile Include="component\DisabledAndInteractionStateTests.cpp" />
+    <ClCompile Include="component\EmptyTextBoxCaretTests.cpp" />
+    <ClCompile Include="component\PopupOpacityTests.cpp" />
+    <ClCompile Include="component\ContentDrivenHeightTests.cpp" />
+    <ClCompile Include="component\FrameWorkBudgetTests.cpp" />
+    <ClCompile Include="component\TextBoxLayoutCacheTests.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\FluentUI\FluentUI.vcxproj">
+      <Project>{dcce72dd-3d48-4f95-9746-89b4ec20677e}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

@@ -1,0 +1,94 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>18.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{927b222f-9b0b-48ed-a4c9-b46437007680}</ProjectGuid>
+    <RootNamespace>FluentUIDemo</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Release'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir)FluentSettings;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+      <PreprocessorDefinitions Condition="'$(Configuration)'=='Debug'">_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(Configuration)'=='Release'">NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary Condition="'$(Configuration)'=='Debug'">MultiThreadedDebug</RuntimeLibrary>
+      <RuntimeLibrary Condition="'$(Configuration)'=='Release'">MultiThreaded</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+    <Manifest>
+      <AdditionalManifestFiles>app.manifest %(AdditionalManifestFiles)</AdditionalManifestFiles>
+    </Manifest>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\FluentUI\FluentUI.vcxproj">
+      <Project>{dcce72dd-3d48-4f95-9746-89b4ec20677e}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\FluentSettings\FluentSettings.vcxproj">
+      <Project>{a5f1c3e2-7b84-4d16-9c0a-2e6f8d3b1a44}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="GalleryMain.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="pages\BasicInputPages.cpp" />
+    <ClCompile Include="pages\CheckRadioPages.cpp" />
+    <ClCompile Include="pages\TextPages.cpp" />
+    <ClCompile Include="pages\PasswordBoxPage.cpp" />
+    <ClCompile Include="pages\TextInputPages.cpp" />
+    <ClCompile Include="pages\SelectionPages.cpp" />
+    <ClCompile Include="pages\DataPages.cpp" />
+    <ClCompile Include="pages\DynamicListPage.cpp" />
+    <ClCompile Include="pages\InfoBarMetricPages.cpp" />
+    <ClCompile Include="pages\DataGridChartPages.cpp" />
+    <ClCompile Include="pages\InspectorPage.cpp" />
+    <ClCompile Include="pages\ShowcaseHelpers.cpp" />
+    <ClCompile Include="pages\StockAnalyzerPage.cpp" />
+    <ClCompile Include="pages\LayoutPages.cpp" />
+    <ClCompile Include="pages\GroupBoxPage.cpp" />
+    <ClCompile Include="pages\MenuPages.cpp" />
+    <ClCompile Include="pages\DemoPages.cpp" />
+    <ClCompile Include="pages\StressTestPages.cpp" />
+    <ClCompile Include="pages\BorderThemePages.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="GalleryMain.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

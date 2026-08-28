@@ -1,0 +1,273 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>18.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{dcce72dd-3d48-4f95-9746-89b4ec20677e}</ProjectGuid>
+    <RootNamespace>FluentUI</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Release'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+      <PreprocessorDefinitions Condition="'$(Configuration)'=='Debug'">_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(Configuration)'=='Release'">NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary Condition="'$(Configuration)'=='Debug'">MultiThreadedDebug</RuntimeLibrary>
+      <RuntimeLibrary Condition="'$(Configuration)'=='Release'">MultiThreaded</RuntimeLibrary>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="fl_common.h" />
+    <ClInclude Include="Api.h" />
+    <ClInclude Include="Application.h" />
+    <ClInclude Include="FluentUI.h" />
+    <ClInclude Include="base\Event.h" />
+    <ClInclude Include="input\InputTypes.h" />
+    <ClInclude Include="input\RoutedEvent.h" />
+    <ClInclude Include="input\ClickCounter.h" />
+    <ClInclude Include="input\DragDrop.h" />
+    <ClInclude Include="input\FocusManager.h" />
+    <ClInclude Include="input\InputManager.h" />
+    <ClInclude Include="graphics\D2DContext.h" />
+    <ClInclude Include="graphics\DWriteContext.h" />
+    <ClInclude Include="graphics\DCompHost.h" />
+    <ClInclude Include="composition\ICompositionBackend.h" />
+    <ClInclude Include="composition\DCompCompositionBackend.h" />
+    <ClInclude Include="composition\ScrollContentHost.h" />
+    <ClInclude Include="composition\OverlaySignature.h" />
+    <ClInclude Include="graphics\ResourceCache.h" />
+    <ClInclude Include="graphics\DeviceLostController.h" />
+    <ClInclude Include="graphics\DrawingContext.h" />
+    <ClInclude Include="styling\ThemeTokens.h" />
+    <ClInclude Include="styling\ThemeManager.h" />
+    <ClInclude Include="animation\Animation.h" />
+    <ClInclude Include="animation\AnimatedValue.h" />
+    <ClInclude Include="controls\primitives\ButtonBase.h" />
+    <ClInclude Include="core\ContentControl.h" />
+    <ClInclude Include="core\Visual.h" />
+    <ClInclude Include="core\UIElement.h" />
+    <ClInclude Include="core\FrameworkElement.h" />
+    <ClInclude Include="core\Control.h" />
+    <ClInclude Include="controls\primitives\ToggleButton.h" />
+    <ClInclude Include="controls\primitives\RangeBase.h" />
+    <ClInclude Include="controls\primitives\ItemsControl.h" />
+    <ClInclude Include="controls\primitives\Selector.h" />
+    <ClInclude Include="core\ScrollMath.h" />
+    <ClInclude Include="core\UIContext.h" />
+    <ClInclude Include="core\IContextMenu.h" />
+    <ClInclude Include="core\Layout.h" />
+    <ClInclude Include="styling\FocusVisual.h" />
+    <ClInclude Include="core\Invalidation.h" />
+    <ClInclude Include="core\Subscription.h" />
+    <ClInclude Include="animation\AnimationRegistry.h" />
+    <ClInclude Include="layout\Border.h" />
+    <ClInclude Include="layout\GroupBox.h" />
+    <ClInclude Include="controls\Button.h" />
+    <ClInclude Include="controls\GridSplitter.h" />
+    <ClInclude Include="controls\ContentDialog.h" />
+    <ClInclude Include="layout\Panel.h" />
+    <ClInclude Include="layout\StackPanel.h" />
+    <ClInclude Include="layout\WrapPanel.h" />
+    <ClInclude Include="layout\UniformGrid.h" />
+    <ClInclude Include="layout\Grid.h" />
+    <ClInclude Include="layout\Canvas.h" />
+    <ClInclude Include="layout\DockPanel.h" />
+    <ClInclude Include="layout\Viewbox.h" />
+    <ClInclude Include="controls\TextBlock.h" />
+    <ClInclude Include="layout\ScrollPanel.h" />
+    <ClInclude Include="layout\ScrollViewer.h" />
+    <ClInclude Include="controls\TreeView.h" />
+    <ClInclude Include="controls\ListBox.h" />
+    <ClInclude Include="controls\Image.h" />
+    <ClInclude Include="controls\TextEditBase.h" />
+    <ClInclude Include="controls\TextBox.h" />
+    <ClInclude Include="controls\PasswordBox.h" />
+    <ClInclude Include="controls\TextArea.h" />
+    <ClInclude Include="text\LineIndex.h" />
+    <ClInclude Include="text\LineLayoutCache.h" />
+    <ClInclude Include="text\LogSink.h" />
+    <ClInclude Include="text\VisibleLines.h" />
+    <ClInclude Include="text\WrapExtentMap.h" />
+    <ClInclude Include="text\WordBoundary.h" />
+    <ClInclude Include="text\UndoStack.h" />
+    <ClInclude Include="controls\CheckBox.h" />
+    <ClInclude Include="controls\RadioButton.h" />
+    <ClInclude Include="controls\RepeatButton.h" />
+    <ClInclude Include="controls\ToggleSwitch.h" />
+    <ClInclude Include="controls\ToggleVisuals.h" />
+    <ClInclude Include="controls\Slider.h" />
+    <ClInclude Include="controls\InfoBar.h" />
+    <ClInclude Include="controls\Metric.h" />
+    <ClInclude Include="controls\DataGrid.h" />
+    <ClInclude Include="controls\Chart.h" />
+    <ClInclude Include="controls\Separator.h" />
+    <ClInclude Include="controls\ProgressBar.h" />
+    <ClInclude Include="controls\ProgressSweepVisual.h" />
+    <ClInclude Include="controls\ComboBox.h" />
+    <ClInclude Include="controls\Expander.h" />
+    <ClInclude Include="controls\MenuFlyout.h" />
+    <ClInclude Include="controls\MenuBar.h" />
+    <ClInclude Include="controls\MessageDialog.h" />
+    <ClInclude Include="controls\TabControl.h" />
+    <ClInclude Include="controls\Hyperlink.h" />
+    <ClInclude Include="controls\Calendar.h" />
+    <ClInclude Include="controls\DatePicker.h" />
+    <ClInclude Include="controls\ToolBar.h" />
+    <ClInclude Include="controls\StatusBar.h" />
+    <ClInclude Include="controls\Rating.h" />
+    <ClInclude Include="controls\NumericUpDown.h" />
+    <ClInclude Include="dialogs\FileDialog.h" />
+    <ClInclude Include="window\NativeWindowHost.h" />
+    <ClInclude Include="window\GraphicsHost.h" />
+    <ClInclude Include="window\InputHost.h" />
+    <ClInclude Include="window\FrameHost.h" />
+    <ClInclude Include="window\ThemeHost.h" />
+    <ClInclude Include="window\DiagnosticsHost.h" />
+    <ClInclude Include="window\Window.h" />
+    <ClInclude Include="window\DialogWindow.h" />
+    <ClInclude Include="window\DialogHost.h" />
+    <ClInclude Include="window\FrameScheduler.h" />
+    <ClInclude Include="services\PopupHost.h" />
+    <ClInclude Include="services\PopupGeometry.h" />
+    <ClInclude Include="window\DirtyRegion.h" />
+    <ClInclude Include="window\FramePacing.h" />
+    <ClInclude Include="window\FrameWaiter.h" />
+    <ClInclude Include="window\ModalFrameHeartbeat.h" />
+    <ClInclude Include="WindowRegistry.h" />
+    <ClInclude Include="services\PopupState.h" />
+    <ClInclude Include="services\TooltipService.h" />
+    <ClInclude Include="window\WindowServices.h" />
+    <ClInclude Include="window\WindowAppearance.h" />
+    <ClInclude Include="window\WindowState.h" />
+    <ClInclude Include="diagnostics\LayoutCostProbe.h" />
+    <ClInclude Include="diagnostics\PerformanceCounters.h" />
+    <ClInclude Include="diagnostics\FrameRing.h" />
+    <ClInclude Include="diagnostics\DebugHud.h" />
+    <ClInclude Include="diagnostics\SessionLog.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Application.cpp" />
+    <ClCompile Include="graphics\D2DContext.cpp" />
+    <ClCompile Include="graphics\DWriteContext.cpp" />
+    <ClCompile Include="graphics\DCompHost.cpp" />
+    <ClCompile Include="composition\DCompCompositionBackend.cpp" />
+    <ClCompile Include="composition\ScrollContentHost.cpp" />
+    <ClCompile Include="graphics\ResourceCache.cpp" />
+    <ClCompile Include="graphics\DeviceLostController.cpp" />
+    <ClCompile Include="styling\ThemeManager.cpp" />
+    <ClCompile Include="animation\Animation.cpp" />
+    <ClCompile Include="core\Visual.cpp" />
+    <ClCompile Include="core\UIElement.cpp" />
+    <ClCompile Include="core\Control.cpp" />
+    <ClCompile Include="animation\AnimationRegistry.cpp" />
+    <ClCompile Include="input\DragDrop.cpp" />
+    <ClCompile Include="input\FocusManager.cpp" />
+    <ClCompile Include="input\InputManager.cpp" />
+    <ClCompile Include="layout\Border.cpp" />
+    <ClCompile Include="layout\GroupBox.cpp" />
+    <ClCompile Include="controls\Button.cpp" />
+    <ClCompile Include="controls\GridSplitter.cpp" />
+    <ClCompile Include="controls\ContentDialog.cpp" />
+    <ClCompile Include="layout\Panel.cpp" />
+    <ClCompile Include="layout\StackPanel.cpp" />
+    <ClCompile Include="layout\WrapPanel.cpp" />
+    <ClCompile Include="layout\UniformGrid.cpp" />
+    <ClCompile Include="layout\Grid.cpp" />
+    <ClCompile Include="layout\Canvas.cpp" />
+    <ClCompile Include="layout\DockPanel.cpp" />
+    <ClCompile Include="layout\Viewbox.cpp" />
+    <ClCompile Include="controls\TextBlock.cpp" />
+    <ClCompile Include="layout\ScrollPanel.cpp" />
+    <ClCompile Include="layout\ScrollViewer.cpp" />
+    <ClCompile Include="controls\TreeView.cpp" />
+    <ClCompile Include="controls\ListBox.cpp" />
+    <ClCompile Include="controls\Image.cpp" />
+    <ClCompile Include="controls\TextEditBase.cpp" />
+    <ClCompile Include="controls\TextBox.cpp" />
+    <ClCompile Include="controls\PasswordBox.cpp" />
+    <ClCompile Include="controls\TextArea.cpp" />
+    <ClCompile Include="text\LineIndex.cpp" />
+    <ClCompile Include="text\LineLayoutCache.cpp" />
+    <ClCompile Include="text\LogSink.cpp" />
+    <ClCompile Include="text\WrapExtentMap.cpp" />
+    <ClCompile Include="text\UndoStack.cpp" />
+    <ClCompile Include="controls\CheckBox.cpp" />
+    <ClCompile Include="controls\RadioButton.cpp" />
+    <ClCompile Include="controls\RepeatButton.cpp" />
+    <ClCompile Include="controls\ToggleSwitch.cpp" />
+    <ClCompile Include="controls\ToggleVisuals.cpp" />
+    <ClCompile Include="controls\Slider.cpp" />
+    <ClCompile Include="controls\InfoBar.cpp" />
+    <ClCompile Include="controls\Metric.cpp" />
+    <ClCompile Include="controls\DataGrid.cpp" />
+    <ClCompile Include="controls\Chart.cpp" />
+    <ClCompile Include="controls\Separator.cpp" />
+    <ClCompile Include="controls\ProgressBar.cpp" />
+    <ClCompile Include="controls\ProgressSweepVisual.cpp" />
+    <ClCompile Include="controls\ComboBox.cpp" />
+    <ClCompile Include="controls\Expander.cpp" />
+    <ClCompile Include="controls\MenuFlyout.cpp" />
+    <ClCompile Include="controls\MenuBar.cpp" />
+    <ClCompile Include="controls\MessageDialog.cpp" />
+    <ClCompile Include="controls\TabControl.cpp" />
+    <ClCompile Include="controls\Hyperlink.cpp" />
+    <ClCompile Include="controls\Calendar.cpp" />
+    <ClCompile Include="controls\DatePicker.cpp" />
+    <ClCompile Include="controls\ToolBar.cpp" />
+    <ClCompile Include="controls\StatusBar.cpp" />
+    <ClCompile Include="controls\Rating.cpp" />
+    <ClCompile Include="controls\NumericUpDown.cpp" />
+    <ClCompile Include="dialogs\FileDialog.cpp" />
+    <ClCompile Include="window\NativeWindowHost.cpp" />
+    <ClCompile Include="window\GraphicsHost.cpp" />
+    <ClCompile Include="window\InputHost.cpp" />
+    <ClCompile Include="window\FrameHost.cpp" />
+    <ClCompile Include="window\ThemeHost.cpp" />
+    <ClCompile Include="window\DiagnosticsHost.cpp" />
+    <ClCompile Include="window\Window.cpp" />
+    <ClCompile Include="window\DialogWindow.cpp" />
+    <ClCompile Include="window\DialogHost.cpp" />
+    <ClCompile Include="window\FrameScheduler.cpp" />
+
+    <ClCompile Include="services\PopupHost.cpp" />
+    <ClCompile Include="services\TooltipService.cpp" />
+    <ClCompile Include="window\WindowAppearance.cpp" />
+    <ClCompile Include="diagnostics\DisplaySyncScheduler.cpp" />
+    <ClCompile Include="diagnostics\LayoutCostProbe.cpp" />
+    <ClCompile Include="diagnostics\PerformanceCounters.cpp" />
+    <ClCompile Include="diagnostics\SessionLog.cpp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

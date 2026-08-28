@@ -1,0 +1,964 @@
+// main.cpp — FluentUI card-based gallery demo.
+//
+// A single-window showcase of all controls organized into themed cards. The window
+// is a borderless Mica backdrop with a custom title bar and status bar. Content is
+// a ScrollPanel → StackPanel with five sections, each holding a 2-column grid of
+// cards (except Dialogs, which is 1-column so buttons fit).
+//
+// Cards follow the Win11 design: rounded corners, translucent fill, subtle stroke.
+// Every control is labeled and interactive where it makes sense. Dialogs demonstrate
+// both ContentDialog/MessageDialog and a custom DialogWindow, all centered on the
+// owner window (Issue #3 fix verification).
+
+#include "../FluentUI/window/Window.h"
+#include "../FluentUI/window/WindowState.h"
+#include "../FluentUI/Application.h"
+#include "../FluentUI/controls/Button.h"
+#include "../FluentUI/controls/CheckBox.h"
+#include "../FluentUI/controls/ComboBox.h"
+#include "../FluentUI/controls/ContentDialog.h"
+#include "../FluentUI/controls/DatePicker.h"
+#include "../FluentUI/controls/Hyperlink.h"
+#include "../FluentUI/controls/Image.h"
+#include "../FluentUI/controls/ListBox.h"
+#include "../FluentUI/controls/MenuBar.h"
+#include "../FluentUI/controls/MessageDialog.h"
+#include "../FluentUI/controls/ProgressBar.h"
+#include "../FluentUI/controls/RadioButton.h"
+#include "../FluentUI/controls/Slider.h"
+#include "../FluentUI/controls/StatusBar.h"
+#include "../FluentUI/controls/TextArea.h"
+#include "../FluentUI/controls/TextBlock.h"
+#include "../FluentUI/controls/TextBox.h"
+#include "../FluentUI/controls/ToggleSwitch.h"
+#include "../FluentUI/controls/ToolBar.h"
+#include "../FluentUI/controls/TreeView.h"
+#include "../FluentUI/layout/Border.h"
+#include "../FluentUI/layout/Canvas.h"
+#include "../FluentUI/layout/DockPanel.h"
+#include "../FluentUI/layout/Grid.h"
+#include "../FluentUI/layout/ScrollPanel.h"
+#include "../FluentUI/layout/StackPanel.h"
+#include "../FluentUI/window/DialogWindow.h"
+#include "../FluentUI/styling/ThemeManager.h"
+#include "../FluentUI/core/Subscription.h"
+#include "ConfigStore.h"
+#include <memory>
+#include <algorithm>
+#include <string>
+
+using namespace fluent;
+
+// Custom dialog demonstrating DialogWindow's direct-derivation pattern.
+class CustomInfoDialog final : public DialogWindow {
+public:
+    CustomInfoDialog() {
+        SetTitle(L"Custom Dialog");
+        SetClientSize(420.0f, 220.0f);
+    }
+
+protected:
+    void OnInitialize() override {
+        auto root = std::make_unique<StackPanel>();
+        root->SetOrientation(StackPanel::Orientation::Vertical);
+        root->SetSpacing(12.0f);
+
+        auto* title = root->Emplace<TextBlock>();
+        title->SetText(L"Custom Dialog");
+        title->SetTypographyRole(TypographyRole::Subtitle);
+
+        auto* message = root->Emplace<TextBlock>();
+        message->SetText(L"This dialog derives from DialogWindow and owns its layout.");
+        message->SetWrap(true);
+
+        auto* actions = root->Emplace<StackPanel>();
+        actions->SetOrientation(StackPanel::Orientation::Horizontal);
+        actions->SetSpacing(8.0f);
+        actions->SetHAlign(HAlign::Right);
+
+        auto* ok = actions->Emplace<Button>();
+        ok->SetText(L"OK");
+        ok->SetKind(Button::Kind::Accent);
+        ok->SetWidth(96.0f);
+        okSub_ = ok->Click().Subscribe(this, [](void* o, Button&, RoutedEventArgs&) {
+            static_cast<CustomInfoDialog*>(o)->Close(DialogResult::Primary);
+        });
+
+        initialFocus_ = ok;
+        SetRoot(std::move(root));
+    }
+
+    void OnLoaded(WindowEventArgs&) override {
+        SetFocusElement(initialFocus_);
+    }
+
+private:
+    Button* initialFocus_ = nullptr;
+    Subscription okSub_;
+};
+
+// === HELPER: Create a themed card Border =========================================
+// Every card has the same chrome: rounded corners, translucent fill, subtle stroke,
+// generous padding. This helper constructs that container and returns a borrowed
+// pointer so the caller can SetChild().
+static Border* CreateCard(Panel* parent) {
+    auto card = std::make_unique<Border>();
+    // Card chrome uses hard-coded neutral values rather than theme tokens: a free
+    // function has no attached element to read Theme() through, and the card fill /
+    // stroke want a subtle translucent look over Mica in both light and dark. The
+    // Border's own theme-change path keeps the child controls themed correctly.
+    card->SetBackground(D2D1::ColorF(1.0f, 1.0f, 1.0f, 0.04f));
+    card->SetBorderColor(D2D1::ColorF(1.0f, 1.0f, 1.0f, 0.10f));
+    card->SetBorderThickness(1.0f);
+    card->SetCornerRadius(8.0f);
+    card->SetPadding(Thickness(20.0f, 16.0f, 20.0f, 16.0f));
+    return parent->Add(std::move(card));
+}
+
+// === HELPER: Create a section header + grid container ============================
+// Each section has a large title, a subtitle, and a Grid holding the cards.
+// Returns the grid so the caller can add cards to it.
+static Grid* CreateSection(Panel* root, const wchar_t* title,
+                           const wchar_t* subtitle, int columns, int maxRows) {
+    auto* titleBlock = root->Emplace<TextBlock>();
+    titleBlock->SetText(title);
+    titleBlock->SetTypographyRole(TypographyRole::Title);
+    // No SetHeight: let Measure() auto-size to the text so tall glyphs
+    // (e.g. 'g', 'y', CJK) are not clipped by D2D1_DRAW_TEXT_OPTIONS_CLIP.
+
+    auto* subtitleBlock = root->Emplace<TextBlock>();
+    subtitleBlock->SetText(subtitle);
+    subtitleBlock->SetDimmed(true);
+    // Same: no SetHeight, auto-size.
+
+    auto* grid = root->Emplace<Grid>();
+    for (int i = 0; i < columns; ++i) grid->AddColumn(GridLength::Star());
+    for (int i = 0; i < maxRows; ++i) grid->AddRow(GridLength::Auto());
+    grid->SetColumnSpacing(16.0f);
+    grid->SetRowSpacing(16.0f);
+
+    return grid;
+}
+
+// === MAIN WINDOW ==================================================================
+class MainWindow final : public Window {
+public:
+    // The application owns persistence; the window only hands out plain data
+    // (CaptureWindowState) and accepts plain data (the restore arg to Show).
+    explicit MainWindow(ConfigStore* cfg) : cfg_(cfg) {
+        SetTitle(L"FluentUI Gallery");
+        SetClientSize(1100.0f, 800.0f);
+        SetCornerRadius(12.0f);
+        SetShadowEnabled(true);
+    }
+
+    // Override to match the visual title bar height (48 DIP) so the entire
+    // visible title bar area is draggable, not just the top 32 DIP.
+    float TitleBarHeightDip() const override { return 48.0f; }
+
+protected:
+    void OnInitialize() override {
+        // Root is a DockPanel, not a StackPanel: WPF semantics. TitleBar docks
+        // Top, StatusBar docks Bottom, and the ScrollPanel (last child) fills
+        // whatever is left. StackPanel no longer has star semantics (it used
+        // to treat Stretch+auto as a star and squeezed every child in
+        // auto-sized containers), so the old "SetVAlign(Stretch) to fill"
+        // trick no longer works — DockPanel is the right panel for this.
+        auto root = std::make_unique<DockPanel>();
+
+        // === Title bar ============================================================
+        BuildTitleBar(root.get());
+
+        // === Status bar (added BEFORE the fill child so it docks Bottom) ========
+        BuildStatusBar(root.get());
+
+        // === Scrollable content (last child -> fills the rest) ====================
+        auto* scrollPanel = root->Emplace<ScrollPanel>();
+        scrollPanel->SetPadding(40.0f);
+        scrollPanel->SetSpacing(32.0f);
+
+        // === Hero header ==========================================================
+        auto* heroTitle = scrollPanel->Emplace<TextBlock>();
+        heroTitle->SetText(L"FluentUI Gallery");
+        heroTitle->SetTypographyRole(TypographyRole::Title);
+        // No SetHeight: auto-size so descenders (g, y) are not clipped.
+
+        auto* heroSubtitle = scrollPanel->Emplace<TextBlock>();
+        heroSubtitle->SetText(
+            L"A from-scratch retained-mode UI framework for Windows desktop, "
+            L"built on Win32 + Direct2D + DirectWrite + DirectComposition.");
+        heroSubtitle->SetWrap(true);
+        heroSubtitle->SetDimmed(true);
+
+        // === Section 1: Basic Controls (9 cards, 2 columns) ======================
+        BuildBasicControlsSection(scrollPanel);
+
+        // === Section 2: Text Input (2 cards, 2 columns) ===========================
+        BuildTextInputSection(scrollPanel);
+
+        // === Section 3: Layout Containers (5 cards, 2 columns) ====================
+        BuildLayoutSection(scrollPanel);
+
+        // === Section 4: Data Controls (3 cards, 2 columns) ========================
+        BuildDataControlsSection(scrollPanel);
+
+        // === Section 5: Dialogs & Windows (3 cards, 1 column) =====================
+        BuildDialogsSection(scrollPanel);
+
+        SetRoot(std::move(root));
+    }
+
+    // Window::OnDestroying is final (it owns the Unloaded ordering), so the save
+    // hook is OnUnloaded — which fires from inside it, while the HWND is still
+    // valid. That validity is what CaptureWindowState needs.
+    void OnUnloaded(WindowEventArgs&) override {
+        if (!cfg_) return;
+        WindowState s = CaptureWindowState();
+        if (s.valid) {
+            cfg_->SetInt("window.x", s.x);
+            cfg_->SetInt("window.y", s.y);
+            cfg_->SetInt("window.width", s.width);
+            cfg_->SetInt("window.height", s.height);
+            cfg_->SetBool("window.maximized", s.maximized);
+            cfg_->SetInt("window.dpi", s.dpi);
+        }
+        cfg_->SetBool("theme.dark", IsDarkMode());
+        cfg_->Save();
+    }
+
+private:
+    void BuildTitleBar(DockPanel* root) {
+        auto* titleBar = root->Emplace<StackPanel>();
+        titleBar->SetOrientation(StackPanel::Orientation::Horizontal);
+        titleBar->SetHeight(48.0f);
+        DockPanel::SetDock(titleBar, Dock::Top);
+
+        auto* titleText = titleBar->Emplace<TextBlock>();
+        titleText->SetText(L"  FluentUI Gallery");
+        titleText->SetTypographyRole(TypographyRole::Subtitle);
+        titleText->SetVAlign(VAlign::Center);
+        titleText->SetHitTestVisible(false);  // Allow title bar drag through text
+    }
+
+    void BuildStatusBar(DockPanel* root) {
+        auto* statusBar = root->Emplace<StatusBar>();
+        statusBar->SetHeight(32.0f);
+        statusBar->SetText(L"Ready");
+        DockPanel::SetDock(statusBar, Dock::Bottom);
+    }
+
+    // === SECTION 1: Basic Controls ================================================
+    void BuildBasicControlsSection(ScrollPanel* scrollPanel) {
+        auto* grid = CreateSection(scrollPanel, L"Basic Controls",
+            L"Buttons, checkboxes, toggles, sliders, and progress indicators", 2, 5);
+
+        int row = 0;
+
+        // Card 1: Button variants
+        {
+            auto* card = CreateCard(grid);
+            auto cardContent = std::make_unique<StackPanel>();
+            cardContent->SetOrientation(StackPanel::Orientation::Vertical);
+            cardContent->SetSpacing(12.0f);
+
+            auto* label = cardContent->Emplace<TextBlock>();
+            label->SetText(L"Button");
+            label->SetTypographyRole(TypographyRole::Subtitle);
+
+            auto* row1 = cardContent->Emplace<StackPanel>();
+            row1->SetOrientation(StackPanel::Orientation::Horizontal);
+            row1->SetSpacing(8.0f);
+
+            auto* btnStd = row1->Emplace<Button>();
+            btnStd->SetText(L"Standard");
+
+            auto* btnAccent = row1->Emplace<Button>();
+            btnAccent->SetText(L"Accent");
+            btnAccent->SetKind(Button::Kind::Accent);
+
+            auto* btnDisabled = row1->Emplace<Button>();
+            btnDisabled->SetText(L"Disabled");
+            btnDisabled->SetEnabled(false);
+
+            card->SetChild(std::move(cardContent));
+            grid->SetCell(card, row, 0);
+        }
+
+        // Card 2: CheckBox
+        {
+            auto* card = CreateCard(grid);
+            auto cardContent = std::make_unique<StackPanel>();
+            cardContent->SetOrientation(StackPanel::Orientation::Vertical);
+            cardContent->SetSpacing(12.0f);
+
+            auto* label = cardContent->Emplace<TextBlock>();
+            label->SetText(L"CheckBox");
+            label->SetTypographyRole(TypographyRole::Subtitle);
+
+            auto* cb1 = cardContent->Emplace<CheckBox>();
+            cb1->SetText(L"Option 1");
+
+            auto* cb2 = cardContent->Emplace<CheckBox>();
+            cb2->SetText(L"Option 2 (checked)");
+            cb2->SetChecked(true);
+
+            auto* cb3 = cardContent->Emplace<CheckBox>();
+            cb3->SetText(L"Disabled");
+            cb3->SetEnabled(false);
+
+            card->SetChild(std::move(cardContent));
+            grid->SetCell(card, row, 1);
+        }
+        row++;
+
+        // Card 3: RadioButton
+        {
+            auto* card = CreateCard(grid);
+            auto cardContent = std::make_unique<StackPanel>();
+            cardContent->SetOrientation(StackPanel::Orientation::Vertical);
+            cardContent->SetSpacing(12.0f);
+
+            auto* label = cardContent->Emplace<TextBlock>();
+            label->SetText(L"RadioButton");
+            label->SetTypographyRole(TypographyRole::Subtitle);
+
+            // radioGroup_ is a MEMBER, not a local: SetGroup stores the pointer and
+            // the buttons write through it on every click, so a stack local would
+            // leave three controls writing to a dead frame.
+            radioGroup_ = 1;
+
+            auto* r1 = cardContent->Emplace<RadioButton>();
+            r1->SetText(L"Choice A");
+            r1->SetGroup(&radioGroup_, 1);
+
+            auto* r2 = cardContent->Emplace<RadioButton>();
+            r2->SetText(L"Choice B");
+            r2->SetGroup(&radioGroup_, 2);
+
+            auto* r3 = cardContent->Emplace<RadioButton>();
+            r3->SetText(L"Choice C");
+            r3->SetGroup(&radioGroup_, 3);
+
+            card->SetChild(std::move(cardContent));
+            grid->SetCell(card, row, 0);
+        }
+
+        // Card 4: ToggleSwitch
+        {
+            auto* card = CreateCard(grid);
+            auto cardContent = std::make_unique<StackPanel>();
+            cardContent->SetOrientation(StackPanel::Orientation::Vertical);
+            cardContent->SetSpacing(12.0f);
+
+            auto* label = cardContent->Emplace<TextBlock>();
+            label->SetText(L"ToggleSwitch");
+            label->SetTypographyRole(TypographyRole::Subtitle);
+
+            auto* ts1 = cardContent->Emplace<ToggleSwitch>();
+            ts1->SetText(L"Off by default");
+
+            auto* ts2 = cardContent->Emplace<ToggleSwitch>();
+            ts2->SetText(L"On by default");
+            ts2->SetChecked(true);
+
+            card->SetChild(std::move(cardContent));
+            grid->SetCell(card, row, 1);
+        }
+        row++;
+
+        // Card 5: Slider
+        {
+            auto* card = CreateCard(grid);
+            auto cardContent = std::make_unique<StackPanel>();
+            cardContent->SetOrientation(StackPanel::Orientation::Vertical);
+            cardContent->SetSpacing(12.0f);
+
+            auto* label = cardContent->Emplace<TextBlock>();
+            label->SetText(L"Slider");
+            label->SetTypographyRole(TypographyRole::Subtitle);
+
+            auto* slider = cardContent->Emplace<Slider>();
+            slider->SetWidth(280.0f);
+            slider->SetMinimum(0.0);
+            slider->SetMaximum(100.0);
+            slider->SetValue(50.0);
+
+            card->SetChild(std::move(cardContent));
+            grid->SetCell(card, row, 0);
+        }
+
+        // Card 6: ProgressBar
+        {
+            auto* card = CreateCard(grid);
+            auto cardContent = std::make_unique<StackPanel>();
+            cardContent->SetOrientation(StackPanel::Orientation::Vertical);
+            cardContent->SetSpacing(12.0f);
+
+            auto* label = cardContent->Emplace<TextBlock>();
+            label->SetText(L"ProgressBar");
+            label->SetTypographyRole(TypographyRole::Subtitle);
+
+            auto* prog = cardContent->Emplace<ProgressBar>();
+            prog->SetWidth(280.0f);
+            prog->SetValue(0.65f);
+
+            auto* indeterminate = cardContent->Emplace<ProgressBar>();
+            indeterminate->SetWidth(280.0f);
+            indeterminate->SetIndeterminate(true);
+
+            card->SetChild(std::move(cardContent));
+            grid->SetCell(card, row, 1);
+        }
+        row++;
+
+        // Card 7: ComboBox
+        {
+            auto* card = CreateCard(grid);
+            auto cardContent = std::make_unique<StackPanel>();
+            cardContent->SetOrientation(StackPanel::Orientation::Vertical);
+            cardContent->SetSpacing(12.0f);
+
+            auto* label = cardContent->Emplace<TextBlock>();
+            label->SetText(L"ComboBox");
+            label->SetTypographyRole(TypographyRole::Subtitle);
+
+            auto* combo = cardContent->Emplace<ComboBox>();
+            combo->SetWidth(240.0f);
+            combo->SetItems({L"Option 1", L"Option 2", L"Option 3"});
+            combo->SetSelectedIndex(0);
+
+            card->SetChild(std::move(cardContent));
+            grid->SetCell(card, row, 0);
+        }
+
+        // Card 8: DatePicker
+        {
+            auto* card = CreateCard(grid);
+            auto cardContent = std::make_unique<StackPanel>();
+            cardContent->SetOrientation(StackPanel::Orientation::Vertical);
+            cardContent->SetSpacing(12.0f);
+
+            auto* label = cardContent->Emplace<TextBlock>();
+            label->SetText(L"DatePicker");
+            label->SetTypographyRole(TypographyRole::Subtitle);
+
+            auto* picker = cardContent->Emplace<DatePicker>();
+            picker->SetWidth(240.0f);
+
+            card->SetChild(std::move(cardContent));
+            grid->SetCell(card, row, 1);
+        }
+        row++;
+
+        // Card 9: Hyperlink
+        {
+            auto* card = CreateCard(grid);
+            auto cardContent = std::make_unique<StackPanel>();
+            cardContent->SetOrientation(StackPanel::Orientation::Vertical);
+            cardContent->SetSpacing(12.0f);
+
+            auto* label = cardContent->Emplace<TextBlock>();
+            label->SetText(L"Hyperlink");
+            label->SetTypographyRole(TypographyRole::Subtitle);
+
+            auto* link = cardContent->Emplace<Hyperlink>();
+            link->SetText(L"FluentUI on GitHub");
+            link->SetUri(L"https://github.com/user/FluentUI");
+            // Demo wants a single click to open the link — override the
+            // library default (Ctrl+Click) for this instance.
+            link->SetActivation(HyperlinkActivation::Click);
+
+            card->SetChild(std::move(cardContent));
+            grid->SetCell(card, row, 0);
+        }
+    }
+
+    // === SECTION 2: Text Input ====================================================
+    void BuildTextInputSection(ScrollPanel* scrollPanel) {
+        auto* grid = CreateSection(scrollPanel, L"Text Input",
+            L"Single-line and multi-line text controls with IME support", 2, 1);
+
+        int row = 0;
+
+        // Card 1: TextBox
+        {
+            auto* card = CreateCard(grid);
+            auto cardContent = std::make_unique<StackPanel>();
+            cardContent->SetOrientation(StackPanel::Orientation::Vertical);
+            cardContent->SetSpacing(12.0f);
+
+            auto* label = cardContent->Emplace<TextBlock>();
+            label->SetText(L"TextBox");
+            label->SetTypographyRole(TypographyRole::Subtitle);
+
+            auto* tb1 = cardContent->Emplace<TextBox>();
+            tb1->SetWidth(320.0f);
+            tb1->SetPlaceholder(L"Type something...");
+
+            auto* tb2 = cardContent->Emplace<TextBox>();
+            tb2->SetWidth(320.0f);
+            tb2->SetText(L"Pre-filled text");
+
+            card->SetChild(std::move(cardContent));
+            grid->SetCell(card, row, 0);
+        }
+
+        // Card 2: TextArea
+        {
+            auto* card = CreateCard(grid);
+            auto cardContent = std::make_unique<StackPanel>();
+            cardContent->SetOrientation(StackPanel::Orientation::Vertical);
+            cardContent->SetSpacing(12.0f);
+
+            auto* label = cardContent->Emplace<TextBlock>();
+            label->SetText(L"TextArea");
+            label->SetTypographyRole(TypographyRole::Subtitle);
+
+            auto* ta = cardContent->Emplace<TextArea>();
+            ta->SetWidth(320.0f);
+            ta->SetHeight(120.0f);
+            ta->SetText(L"Multi-line text editor.\nSupports IME composition.\nScroll and select.");
+            ta->SetWrapMode(TextWrapMode::Wrap);
+
+            card->SetChild(std::move(cardContent));
+            grid->SetCell(card, row, 1);
+        }
+    }
+
+    // === SECTION 3: Layout Containers =============================================
+    void BuildLayoutSection(ScrollPanel* scrollPanel) {
+        auto* grid = CreateSection(scrollPanel, L"Layout Containers",
+            L"Panels and decorators for organizing content", 2, 3);
+
+        int row = 0;
+
+        // Card 1: StackPanel demo
+        {
+            auto* card = CreateCard(grid);
+            auto cardContent = std::make_unique<StackPanel>();
+            cardContent->SetOrientation(StackPanel::Orientation::Vertical);
+            cardContent->SetSpacing(12.0f);
+
+            auto* label = cardContent->Emplace<TextBlock>();
+            label->SetText(L"StackPanel");
+            label->SetTypographyRole(TypographyRole::Subtitle);
+
+            auto* demo = cardContent->Emplace<StackPanel>();
+            demo->SetOrientation(StackPanel::Orientation::Horizontal);
+            demo->SetSpacing(8.0f);
+            demo->Emplace<Button>()->SetText(L"A");
+            demo->Emplace<Button>()->SetText(L"B");
+            demo->Emplace<Button>()->SetText(L"C");
+
+            card->SetChild(std::move(cardContent));
+            grid->SetCell(card, row, 0);
+        }
+
+        // Card 2: Grid demo
+        {
+            auto* card = CreateCard(grid);
+            auto cardContent = std::make_unique<StackPanel>();
+            cardContent->SetOrientation(StackPanel::Orientation::Vertical);
+            cardContent->SetSpacing(12.0f);
+
+            auto* label = cardContent->Emplace<TextBlock>();
+            label->SetText(L"Grid");
+            label->SetTypographyRole(TypographyRole::Subtitle);
+
+            auto* demoGrid = cardContent->Emplace<Grid>();
+            demoGrid->AddColumn(GridLength::Star());
+            demoGrid->AddColumn(GridLength::Star());
+            demoGrid->AddRow(GridLength::Auto());
+            demoGrid->AddRow(GridLength::Auto());
+            demoGrid->SetColumnSpacing(8.0f);
+            demoGrid->SetRowSpacing(8.0f);
+
+            auto* b1 = demoGrid->Emplace<Button>();
+            b1->SetText(L"(0,0)");
+            demoGrid->SetCell(b1, 0, 0);
+
+            auto* b2 = demoGrid->Emplace<Button>();
+            b2->SetText(L"(0,1)");
+            demoGrid->SetCell(b2, 0, 1);
+
+            auto* b3 = demoGrid->Emplace<Button>();
+            b3->SetText(L"(1,0)");
+            demoGrid->SetCell(b3, 1, 0);
+
+            auto* b4 = demoGrid->Emplace<Button>();
+            b4->SetText(L"(1,1)");
+            demoGrid->SetCell(b4, 1, 1);
+
+            card->SetChild(std::move(cardContent));
+            grid->SetCell(card, row, 1);
+        }
+        row++;
+
+        // Card 3: Border
+        {
+            auto* card = CreateCard(grid);
+            auto cardContent = std::make_unique<StackPanel>();
+            cardContent->SetOrientation(StackPanel::Orientation::Vertical);
+            cardContent->SetSpacing(12.0f);
+
+            auto* label = cardContent->Emplace<TextBlock>();
+            label->SetText(L"Border");
+            label->SetTypographyRole(TypographyRole::Subtitle);
+
+            auto demoBorder = std::make_unique<Border>();
+            demoBorder->SetBackground(D2D1::ColorF(0.35f, 0.55f, 0.85f, 0.18f));
+            demoBorder->SetBorderColor(D2D1::ColorF(0.35f, 0.55f, 0.85f, 0.85f));
+            demoBorder->SetBorderThickness(2.0f);
+            demoBorder->SetCornerRadius(8.0f);
+            demoBorder->SetPadding(Thickness(12.0f));
+
+            auto borderChild = std::make_unique<TextBlock>();
+            borderChild->SetText(L"Content inside Border");
+            demoBorder->SetChild(std::move(borderChild));
+
+            cardContent->Add(std::move(demoBorder));
+            card->SetChild(std::move(cardContent));
+            grid->SetCell(card, row, 0);
+        }
+
+        // Card 4: Canvas
+        {
+            auto* card = CreateCard(grid);
+            auto cardContent = std::make_unique<StackPanel>();
+            cardContent->SetOrientation(StackPanel::Orientation::Vertical);
+            cardContent->SetSpacing(12.0f);
+
+            auto* label = cardContent->Emplace<TextBlock>();
+            label->SetText(L"Canvas");
+            label->SetTypographyRole(TypographyRole::Subtitle);
+
+            auto* canvas = cardContent->Emplace<Canvas>();
+            canvas->SetWidth(280.0f);
+            canvas->SetHeight(100.0f);
+
+            auto* c1 = canvas->Emplace<Button>();
+            c1->SetText(L"(10, 10)");
+            Canvas::SetLeft(c1, 10.0f);
+            Canvas::SetTop(c1, 10.0f);
+
+            auto* c2 = canvas->Emplace<Button>();
+            c2->SetText(L"(120, 50)");
+            Canvas::SetLeft(c2, 120.0f);
+            Canvas::SetTop(c2, 50.0f);
+
+            card->SetChild(std::move(cardContent));
+            grid->SetCell(card, row, 1);
+        }
+        row++;
+
+        // Card 5: DockPanel
+        {
+            auto* card = CreateCard(grid);
+            auto cardContent = std::make_unique<StackPanel>();
+            cardContent->SetOrientation(StackPanel::Orientation::Vertical);
+            cardContent->SetSpacing(12.0f);
+
+            auto* label = cardContent->Emplace<TextBlock>();
+            label->SetText(L"DockPanel");
+            label->SetTypographyRole(TypographyRole::Subtitle);
+
+            auto* dock = cardContent->Emplace<DockPanel>();
+            dock->SetWidth(280.0f);
+            dock->SetHeight(100.0f);
+
+            // Margin on every docked button so a focus ring (which overflows the
+            // bounds by ~3.75 DIP — inset 2 + half the 1.5 stroke + AA) has room
+            // to paint without being overdrawn by the next sibling. Without the
+            // gap the Top button's ring lands inside Left/Fill and they cover it.
+            constexpr float kGap = 4.0f;
+
+            auto* top = dock->Emplace<Button>();
+            top->SetText(L"Top");
+            top->SetHeight(28.0f);
+            top->SetMargin(Thickness(kGap, kGap, kGap, 0.0f));
+            DockPanel::SetDock(top, Dock::Top);
+
+            auto* left = dock->Emplace<Button>();
+            left->SetText(L"Left");
+            left->SetWidth(60.0f);
+            left->SetMargin(Thickness(kGap, kGap, 0.0f, kGap));
+            DockPanel::SetDock(left, Dock::Left);
+
+            auto* fill = dock->Emplace<Button>();
+            fill->SetText(L"Fill");
+            fill->SetMargin(Thickness(kGap, kGap, kGap, kGap));
+
+            card->SetChild(std::move(cardContent));
+            grid->SetCell(card, row, 0);
+        }
+    }
+
+    // === SECTION 4: Data Controls =================================================
+    void BuildDataControlsSection(ScrollPanel* scrollPanel) {
+        auto* grid = CreateSection(scrollPanel, L"Data Controls",
+            L"Lists, trees, and structured data displays", 2, 2);
+
+        int row = 0;
+
+        // Card 1: ListBox
+        {
+            auto* card = CreateCard(grid);
+            auto cardContent = std::make_unique<StackPanel>();
+            cardContent->SetOrientation(StackPanel::Orientation::Vertical);
+            cardContent->SetSpacing(12.0f);
+
+            auto* label = cardContent->Emplace<TextBlock>();
+            label->SetText(L"ListBox");
+            label->SetTypographyRole(TypographyRole::Subtitle);
+
+            auto* listBox = cardContent->Emplace<ListBox>();
+            listBox->SetWidth(280.0f);
+            listBox->SetHeight(120.0f);
+            listBox->SetItems({L"Item 1", L"Item 2", L"Item 3", L"Item 4", L"Item 5"});
+
+            card->SetChild(std::move(cardContent));
+            grid->SetCell(card, row, 0);
+        }
+
+        // Card 2: TreeView
+        {
+            auto* card = CreateCard(grid);
+            auto cardContent = std::make_unique<StackPanel>();
+            cardContent->SetOrientation(StackPanel::Orientation::Vertical);
+            cardContent->SetSpacing(12.0f);
+
+            auto* label = cardContent->Emplace<TextBlock>();
+            label->SetText(L"TreeView");
+            label->SetTypographyRole(TypographyRole::Subtitle);
+
+            auto* tree = cardContent->Emplace<TreeView>();
+            tree->SetWidth(280.0f);
+            tree->SetHeight(120.0f);
+
+            std::vector<TreeViewRow> rows;
+            auto add = [&rows](int id, int parent, const wchar_t* text, int depth,
+                               bool hasChildren, TreeViewIcon icon) {
+                TreeViewRow r;
+                r.id = id; r.parentId = parent; r.text = text; r.depth = depth;
+                r.hasChildren = hasChildren; r.expanded = true; r.icon = icon;
+                rows.push_back(r);
+            };
+            add(1, -1, L"This PC", 0, true, TreeViewIcon::Computer);
+            add(2, 1, L"Local Disk (C:)", 1, false, TreeViewIcon::Disk);
+            add(3, 1, L"Data (D:)", 1, false, TreeViewIcon::Disk);
+            add(4, -1, L"Network", 0, true, TreeViewIcon::Folder);
+            add(5, 4, L"NAS-01", 1, true, TreeViewIcon::Folder);
+            add(6, 5, L"Backups", 2, false, TreeViewIcon::Device);
+            tree->SetRows(std::move(rows));
+
+            card->SetChild(std::move(cardContent));
+            grid->SetCell(card, row, 1);
+        }
+        row++;
+
+        // Card 3: MenuBar
+        {
+            auto* card = CreateCard(grid);
+            auto cardContent = std::make_unique<StackPanel>();
+            cardContent->SetOrientation(StackPanel::Orientation::Vertical);
+            cardContent->SetSpacing(12.0f);
+
+            auto* label = cardContent->Emplace<TextBlock>();
+            label->SetText(L"MenuBar");
+            label->SetTypographyRole(TypographyRole::Subtitle);
+
+            auto* menuBar = cardContent->Emplace<MenuBar>();
+            menuBar->SetWidth(280.0f);
+
+            // AddMenu is called once per top-level menu, each with its submenu items
+            menuBar->AddMenu(L"File", {
+                {L"New"}, {L"Open"}, MenuItem::Sep(), {L"Exit"}
+            });
+            menuBar->AddMenu(L"Edit", {
+                {L"Undo"}, {L"Redo"}
+            });
+
+            card->SetChild(std::move(cardContent));
+            grid->SetCell(card, row, 0);
+        }
+    }
+
+    // === SECTION 5: Dialogs & Windows =============================================
+    void BuildDialogsSection(ScrollPanel* scrollPanel) {
+        auto* grid = CreateSection(scrollPanel, L"Dialogs & Windows",
+            L"Modal dialogs, message boxes, and custom windows", 1, 3);
+
+        selfPtr_ = this;  // Store for lambda capture
+        int row = 0;
+
+        // Card 1: MessageDialog
+        {
+            auto* card = CreateCard(grid);
+            auto cardContent = std::make_unique<StackPanel>();
+            cardContent->SetOrientation(StackPanel::Orientation::Vertical);
+            cardContent->SetSpacing(12.0f);
+
+            auto* label = cardContent->Emplace<TextBlock>();
+            label->SetText(L"MessageDialog");
+            label->SetTypographyRole(TypographyRole::Subtitle);
+
+            auto* desc = cardContent->Emplace<TextBlock>();
+            desc->SetText(L"One-line message boxes with standard button sets.");
+            desc->SetWrap(true);
+            desc->SetDimmed(true);
+
+            auto* btnRow = cardContent->Emplace<StackPanel>();
+            btnRow->SetOrientation(StackPanel::Orientation::Horizontal);
+            btnRow->SetSpacing(8.0f);
+
+            auto* btnOk = btnRow->Emplace<Button>();
+            btnOk->SetText(L"Show OK");
+            btnOkSub_ = btnOk->Click().Subscribe(this, [](void* owner, Button&, RoutedEventArgs&) {
+                auto* self = static_cast<MainWindow*>(owner);
+                MessageDialog::Show(*self->selfPtr_, L"Information",
+                    L"This is a simple OK dialog.", DialogButtons::Ok);
+            });
+
+            auto* btnYesNo = btnRow->Emplace<Button>();
+            btnYesNo->SetText(L"Show Yes/No");
+            btnYesNoSub_ = btnYesNo->Click().Subscribe(this, [](void* owner, Button&, RoutedEventArgs&) {
+                auto* self = static_cast<MainWindow*>(owner);
+                auto result = MessageDialog::Show(*self->selfPtr_, L"Confirm",
+                    L"Do you want to continue?", DialogButtons::YesNo);
+                if (result == DialogResult::Primary) {
+                    MessageDialog::Show(*self->selfPtr_, L"Result", L"You chose Yes.", DialogButtons::Ok);
+                }
+            });
+
+            card->SetChild(std::move(cardContent));
+            grid->SetCell(card, row, 0);
+        }
+        row++;
+
+        // Card 2: ContentDialog
+        {
+            auto* card = CreateCard(grid);
+            auto cardContent = std::make_unique<StackPanel>();
+            cardContent->SetOrientation(StackPanel::Orientation::Vertical);
+            cardContent->SetSpacing(12.0f);
+
+            auto* label = cardContent->Emplace<TextBlock>();
+            label->SetText(L"ContentDialog");
+            label->SetTypographyRole(TypographyRole::Subtitle);
+
+            auto* desc = cardContent->Emplace<TextBlock>();
+            desc->SetText(L"Template dialog with custom content and buttons.");
+            desc->SetWrap(true);
+            desc->SetDimmed(true);
+
+            auto* btnShow = cardContent->Emplace<Button>();
+            btnShow->SetText(L"Show Content Dialog");
+            btnContentSub_ = btnShow->Click().Subscribe(this, [](void* owner, Button&, RoutedEventArgs&) {
+                auto* self = static_cast<MainWindow*>(owner);
+                ContentDialog dialog;
+                dialog.SetTitle(L"Custom Content");
+
+                auto content = std::make_unique<StackPanel>();
+                content->SetOrientation(StackPanel::Orientation::Vertical);
+                content->SetSpacing(8.0f);
+
+                auto* txt1 = content->Emplace<TextBlock>();
+                txt1->SetText(L"This dialog has custom content:");
+
+                auto* cb = content->Emplace<CheckBox>();
+                cb->SetText(L"Remember my choice");
+
+                dialog.SetContent(std::move(content));
+                dialog.AddButton(L"Continue", DialogResult::Primary);
+                dialog.AddButton(L"Cancel", DialogResult::Cancel);
+
+                // ShowDialog runs its own modal pump and returns when closed, so the
+                // dialog can live on the stack for the duration.
+                dialog.ShowDialog(*self->selfPtr_);
+            });
+
+            card->SetChild(std::move(cardContent));
+            grid->SetCell(card, row, 0);
+        }
+        row++;
+
+        // Card 3: Custom DialogWindow
+        {
+            auto* card = CreateCard(grid);
+            auto cardContent = std::make_unique<StackPanel>();
+            cardContent->SetOrientation(StackPanel::Orientation::Vertical);
+            cardContent->SetSpacing(12.0f);
+
+            auto* label = cardContent->Emplace<TextBlock>();
+            label->SetText(L"Custom DialogWindow");
+            label->SetTypographyRole(TypographyRole::Subtitle);
+
+            auto* desc = cardContent->Emplace<TextBlock>();
+            desc->SetText(L"Derive from DialogWindow for full control over layout and logic.");
+            desc->SetWrap(true);
+            desc->SetDimmed(true);
+
+            auto* btnShow = cardContent->Emplace<Button>();
+            btnShow->SetText(L"Show Custom Dialog");
+            btnCustomSub_ = btnShow->Click().Subscribe(this, [](void* owner, Button&, RoutedEventArgs&) {
+                auto* self = static_cast<MainWindow*>(owner);
+                CustomInfoDialog dialog;
+                dialog.ShowDialog(*self->selfPtr_);
+            });
+
+            card->SetChild(std::move(cardContent));
+            grid->SetCell(card, row, 0);
+        }
+    }
+
+    // Borrowed from wWinMain; the app owns it, this window just reads/writes on
+    // launch and teardown.
+    ConfigStore* cfg_ = nullptr;
+
+    // For lambda capture in dialog button callbacks. Set at the top of
+    // BuildDialogsSection; a MainWindow* would do, but the dialog APIs take a
+    // BackdropWindow& so the base type is what's useful here.
+    Window* selfPtr_ = nullptr;
+
+    // The radio group's backing value. A MEMBER because RadioButton::SetGroup
+    // stores the pointer and writes through it on every click.
+    int radioGroup_{1};
+
+    Subscription btnOkSub_;
+    Subscription btnYesNoSub_;
+    Subscription btnContentSub_;
+    Subscription btnCustomSub_;
+};
+
+// === ENTRY POINT ==================================================================
+int APIENTRY wWinMain(HINSTANCE hInst, HINSTANCE, LPWSTR, int) {
+    Application app(hInst);
+
+    // App-owned settings store (FluentSettings). Loaded before the window so the
+    // saved placement can be handed to Show() as plain data — the window itself
+    // does no file I/O.
+    ConfigStore cfg;
+    cfg.Initialize(L"FluentUIDemo");
+
+    bool wantDark = cfg.GetBool("theme.dark", SystemUsesDarkMode());
+
+    WindowState restore;
+    if (cfg.Has("window.width") && cfg.Has("window.height")) {
+        restore.x = static_cast<int>(cfg.GetInt("window.x", 0));
+        restore.y = static_cast<int>(cfg.GetInt("window.y", 0));
+        restore.width = static_cast<int>(cfg.GetInt("window.width", 0));
+        restore.height = static_cast<int>(cfg.GetInt("window.height", 0));
+        restore.maximized = cfg.GetBool("window.maximized", false);
+        restore.dpi = static_cast<UINT>(cfg.GetInt("window.dpi", 96));
+        restore.valid = restore.width > 0 && restore.height > 0;
+    }
+
+    MainWindow win(&cfg);
+    if (FAILED(win.Show(app, restore.valid ? &restore : nullptr)))
+        return 1;
+    // Floor the draggable size at what the 2-column card grid actually needs.
+    win.SetMinClientSizeDip(720.0f, 400.0f);
+    win.SetDarkMode(wantDark);
+
+    return app.Run();
+}

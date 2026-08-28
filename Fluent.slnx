@@ -1,0 +1,10 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+  </Configurations>
+  <Project Path="FluentSettings/FluentSettings.vcxproj" Id="a5f1c3e2-7b84-4d16-9c0a-2e6f8d3b1a44" />
+  <Project Path="FluentUI/FluentUI.vcxproj" Id="dcce72dd-3d48-4f95-9746-89b4ec20677e" />
+  <Project Path="FluentUIDemo/FluentUIDemo.vcxproj" Id="927b222f-9b0b-48ed-a4c9-b46437007680" />
+  <Project Path="FluentUIBench/FluentUIBench.vcxproj" Id="c3f5a1d8-2e47-4b96-8d1a-7f9c4e6b0a52" />
+  <Project Path="tests/FluentUITests.vcxproj" Id="b1e7d4a3-6c92-4f18-8a5d-3f7e2c9b0d61" />
+</Solution>

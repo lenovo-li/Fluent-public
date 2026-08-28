@@ -1,0 +1,72 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="pages">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="GalleryMain.cpp" />
+    <ClCompile Include="pages\BasicInputPages.cpp">
+      <Filter>pages</Filter>
+    </ClCompile>
+    <ClCompile Include="pages\CheckRadioPages.cpp">
+      <Filter>pages</Filter>
+    </ClCompile>
+    <ClCompile Include="pages\TextPages.cpp">
+      <Filter>pages</Filter>
+    </ClCompile>
+    <ClCompile Include="pages\PasswordBoxPage.cpp">
+      <Filter>pages</Filter>
+    </ClCompile>
+    <ClCompile Include="pages\TextInputPages.cpp">
+      <Filter>pages</Filter>
+    </ClCompile>
+    <ClCompile Include="pages\SelectionPages.cpp">
+      <Filter>pages</Filter>
+    </ClCompile>
+    <ClCompile Include="pages\DataPages.cpp">
+      <Filter>pages</Filter>
+    </ClCompile>
+    <ClCompile Include="pages\DynamicListPage.cpp">
+      <Filter>pages</Filter>
+    </ClCompile>
+    <ClCompile Include="pages\InfoBarMetricPages.cpp">
+      <Filter>pages</Filter>
+    </ClCompile>
+    <ClCompile Include="pages\DataGridChartPages.cpp">
+      <Filter>pages</Filter>
+    </ClCompile>
+    <ClCompile Include="pages\InspectorPage.cpp">
+      <Filter>pages</Filter>
+    </ClCompile>
+    <ClCompile Include="pages\ShowcaseHelpers.cpp">
+      <Filter>pages</Filter>
+    </ClCompile>
+    <ClCompile Include="pages\StockAnalyzerPage.cpp">
+      <Filter>pages</Filter>
+    </ClCompile>
+    <ClCompile Include="pages\LayoutPages.cpp">
+      <Filter>pages</Filter>
+    </ClCompile>
+    <ClCompile Include="pages\GroupBoxPage.cpp">
+      <Filter>pages</Filter>
+    </ClCompile>
+    <ClCompile Include="pages\MenuPages.cpp">
+      <Filter>pages</Filter>
+    </ClCompile>
+    <ClCompile Include="pages\DemoPages.cpp">
+      <Filter>pages</Filter>
+    </ClCompile>
+    <ClCompile Include="pages\StressTestPages.cpp">
+      <Filter>pages</Filter>
+    </ClCompile>
+    <ClCompile Include="pages\BorderThemePages.cpp">
+      <Filter>pages</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="GalleryMain.h" />
+  </ItemGroup>
+</Project>
